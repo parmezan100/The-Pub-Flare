@@ -8,6 +8,7 @@
     <style>
         body { font-family: 'Comic Sans MS', cursive, sans-serif; text-align: center; }
         #chat { border: 1px solid #ccc; padding: 10px; width: 300px; height: 200px; overflow-y: scroll; margin: 10px auto; }
+        #users { margin: 10px auto; padding: 5px; border: 1px solid #ccc; width: 300px; }
     </style>
 </head>
 <body>
@@ -16,6 +17,9 @@
     <label>Enter your name: </label>
     <input type="text" id="username">
     <button onclick="saveName()">Save name</button>
+
+    <h3>Connected Users</h3>
+    <div id="users">No users connected.</div>
 
     <h3>Send Message</h3>
     <button onclick="sendMessage('Yes')">Yes</button>
@@ -35,6 +39,7 @@
         });
 
         let connections = [];
+        let connectedUsers = new Set();
 
         peer.on('open', function(id) {
             console.log("Your Peer ID: " + id);
@@ -45,6 +50,8 @@
         peer.on('connection', function(conn) {
             connections.push(conn);
             console.log("New connection established with:", conn.peer);
+            connectedUsers.add(conn.peer);
+            updateConnectedUsers();
             conn.on('data', function(data) {
                 console.log("Received message:", data);
                 displayMessage(data);
@@ -63,6 +70,8 @@
                             let conn = peer.connect(peerId);
                             conn.on('open', () => {
                                 connections.push(conn);
+                                connectedUsers.add(peerId);
+                                updateConnectedUsers();
                                 console.log("Connected to peer:", peerId);
                                 conn.on('data', function(data) {
                                     console.log("Received message:", data);
@@ -73,6 +82,15 @@
                     });
                 })
                 .catch(error => console.log("Error fetching peers:", error));
+        }
+
+        function updateConnectedUsers() {
+            let usersDiv = document.getElementById("users");
+            if (connectedUsers.size === 0) {
+                usersDiv.innerHTML = "No users connected.";
+            } else {
+                usersDiv.innerHTML = "<strong>Connected Users:</strong><br>" + Array.from(connectedUsers).join("<br>");
+            }
         }
 
         function saveName() {
@@ -129,6 +147,7 @@
             let chatBox = document.getElementById("chat");
             chatBox.innerHTML += message;
         }
+
     </script>
 
 </body>
