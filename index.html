@@ -17,8 +17,8 @@
     <button onclick="saveName()">Save name</button>
 
     <h3>Send Message</h3>
-    <button onclick="sendMessage('Yes')">Yes</button>
-    <button onclick="sendPubFlare()">Send The Pub Flare!</button>
+    <input type="text" id="messageInput" placeholder="Enter your message">
+    <button onclick="sendMessage()">Send</button>
 
     <div id="chat"></div>
 
@@ -33,23 +33,17 @@
             alert("Name saved!");
         }
 
-        function sendMessage(option) {
+        function sendMessage() {
             let name = localStorage.getItem("username");
             if (!name) return alert("Please enter your name first!");
 
-            let message = `<p><strong>${name}:</strong> ${option}</p>`;
-            storeMessage(message);
-            displayMessages();
-        }
+            let message = document.getElementById("messageInput").value;
+            if (message.trim() === "") return;
 
-        function sendPubFlare() {
-            let name = localStorage.getItem("username");
-            if (!name) return alert("Please enter your name first!");
-
-            let message = `<p><strong>${name}:</strong> I'm BORED. Does anyone want to go to the pub?</p>`;
-            storeMessage(message);
+            let fullMessage = `<p><strong>${name}:</strong> ${message}</p>`;
+            storeMessage(fullMessage);
             displayMessages();
-            playSound();
+            document.getElementById("messageInput").value = "";
         }
 
         function playSound() {
@@ -73,9 +67,9 @@
 
         function displayMessages() {
             let chatBox = document.getElementById("chat");
-            chatBox.innerHTML = "";
             let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
 
+            chatBox.innerHTML = "";
             messages.forEach(msg => {
                 chatBox.innerHTML += msg;
             });
