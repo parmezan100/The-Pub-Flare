@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Pub Flare</title>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: 'Comic Sans MS', cursive, sans-serif; text-align: center; }
-        #chat { border: 1px solid #ccc; padding: 10px; width: 300px; height: 200px; overflow-y: scroll; margin: 10px auto; }
+        body { 
+            font-family: 'Comic Sans MS', cursive, sans-serif; 
+            text-align: center; 
+        }
+        #chat { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            width: 300px; 
+            height: 200px; 
+            overflow-y: scroll; 
+            margin: 10px auto; 
+        }
     </style>
 </head>
 <body>
@@ -17,65 +28,82 @@
     <button onclick="saveName()">Save name</button>
 
     <h3>Send Message</h3>
-    <input type="text" id="messageInput" placeholder="Enter your message">
-    <button onclick="sendMessage()">Send</button>
+    <button onclick="sendMessage('Yes')">Yes</button>
+    <button onclick="sendPubFlare()">Send The Pub Flare!</button>
 
     <div id="chat"></div>
 
     <!-- sound -->
-    <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
-    <button onclick="playSound()">Test Sound</button>
+    <audio id="alertSound" src="alert.mp3"></audio>
 
     <script>
+        const peer = new Peer(); 
+        let connections = [];
+
+        peer.on('open', function(id) {
+            console.log("Your Peer ID: " + id);
+            localStorage.setItem("peerId", id);
+        });
+
+        peer.on('connection', function(conn) {
+            connections.push(conn);
+            conn.on('data', function(data) {
+                displayMessage(data);
+            });
+        });
+
+        function autoConnect() {
+            let myId = localStorage.getItem("peerId");
+            if (!myId) return;
+
+            fetch('https://my-signaling-server.example.com/getPeers') 
+                .then(response => response.json())
+                .then(peers => {
+                    peers.forEach(peerId => {
+                        if (peerId !== myId) {
+                            let conn = peer.connect(peerId);
+                            conn.on('open', () => {
+                                connections.push(conn);
+                                conn.on('data', function(data) {
+                                    displayMessage(data);
+                                });
+                            });
+                        }
+                    });
+                });
+        }
+
         function saveName() {
             let name = document.getElementById("username").value;
             localStorage.setItem("username", name);
             alert("Name saved!");
         }
 
-        function sendMessage() {
+        function sendMessage(option) {
             let name = localStorage.getItem("username");
             if (!name) return alert("Please enter your name first!");
 
-            let message = document.getElementById("messageInput").value;
-            if (message.trim() === "") return;
-
-            let fullMessage = `<p><strong>${name}:</strong> ${message}</p>`;
-            storeMessage(fullMessage);
-            displayMessages();
-            document.getElementById("messageInput").value = "";
+            let message = `<p><strong>${name}:</strong> ${option}</p>`;
+            displayMessage(message);
+            connections.forEach(conn => conn.send(message));
         }
 
-        function playSound() {
-            let sound = document.getElementById("alertSound");
+        function sendPubFlare() {
+            let name = localStorage.getItem("username");
+            if (!name) return alert("Please enter your name first!");
 
-            if (!sound) {
-                console.log("Audio element not found!");
-                return;
-            }
-
-            sound.play().catch(error => {
-                console.log("Error playing sound:", error);
-            });
+            let message = `<p><strong>${name}:</strong> I'm BORED. Does anyone want to go to the pub?</p>`;
+            displayMessage(message);
+            document.getElementById("alertSound").play();
+            connections.forEach(conn => conn.send(message));
         }
 
-        function storeMessage(message) {
-            let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-            messages.push(message);
-            localStorage.setItem("chatMessages", JSON.stringify(messages));
-        }
-
-        function displayMessages() {
+        function displayMessage(message) {
             let chatBox = document.getElementById("chat");
-            let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-
-            chatBox.innerHTML = "";
-            messages.forEach(msg => {
-                chatBox.innerHTML += msg;
-            });
+            chatBox.innerHTML += message;
         }
 
-        window.onload = displayMessages;
+        window.onload = autoConnect;
     </script>
 
 </body>
