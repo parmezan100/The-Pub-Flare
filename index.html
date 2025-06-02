@@ -44,12 +44,14 @@
         peer.on('open', function(id) {
             console.log("Your Peer ID: " + id);
             localStorage.setItem("peerId", id);
-            autoConnect(); // ביצוע התחברות אוטומטית
+            autoConnect();
         });
 
         peer.on('connection', function(conn) {
             connections.push(conn);
+            console.log("New connection established with:", conn.peer);
             conn.on('data', function(data) {
+                console.log("Received message from:", conn.peer, "Message:", data);
                 displayMessage(data);
             });
         });
@@ -66,7 +68,9 @@
                             let conn = peer.connect(peerId);
                             conn.on('open', () => {
                                 connections.push(conn);
+                                console.log("Connected to peer:", peerId);
                                 conn.on('data', function(data) {
+                                    console.log("Received message:", data);
                                     displayMessage(data);
                                 });
                             });
