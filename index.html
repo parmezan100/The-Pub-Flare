@@ -34,7 +34,8 @@
     <div id="chat"></div>
 
     <!-- sound -->
-    <audio id="alertSound" src="alert.mp3"></audio>
+    <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+    <button onclick="playSound()">Test Sound</button>
 
     <script>
         const peer = new Peer(); 
@@ -43,6 +44,7 @@
         peer.on('open', function(id) {
             console.log("Your Peer ID: " + id);
             localStorage.setItem("peerId", id);
+            autoConnect(); // ביצוע התחברות אוטומטית
         });
 
         peer.on('connection', function(conn) {
@@ -70,7 +72,8 @@
                             });
                         }
                     });
-                });
+                })
+                .catch(error => console.log("Error fetching peers:", error));
         }
 
         function saveName() {
@@ -85,7 +88,15 @@
 
             let message = `<p><strong>${name}:</strong> ${option}</p>`;
             displayMessage(message);
-            connections.forEach(conn => conn.send(message));
+
+            if (connections.length === 0) {
+                console.log("No active connections!");
+            } else {
+                connections.forEach(conn => {
+                    console.log("Sending message to:", conn.peer);
+                    conn.send(message);
+                });
+            }
         }
 
         function sendPubFlare() {
@@ -94,8 +105,25 @@
 
             let message = `<p><strong>${name}:</strong> I'm BORED. Does anyone want to go to the pub?</p>`;
             displayMessage(message);
-            document.getElementById("alertSound").play();
-            connections.forEach(conn => conn.send(message));
+            playSound();
+
+            connections.forEach(conn => {
+                console.log("Sending pub flare to:", conn.peer);
+                conn.send(message);
+            });
+        }
+
+        function playSound() {
+            let sound = document.getElementById("alertSound");
+
+            if (!sound) {
+                console.log("Audio element not found!");
+                return;
+            }
+
+            sound.play().catch(error => {
+                console.log("Error playing sound:", error);
+            });
         }
 
         function displayMessage(message) {
@@ -103,7 +131,7 @@
             chatBox.innerHTML += message;
         }
 
-        window.onload = autoConnect;
     </script>
+
 </body>
 </html>
