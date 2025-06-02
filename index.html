@@ -20,6 +20,7 @@
 
     <h3>Connected Users</h3>
     <div id="users">No users connected.</div>
+    <button onclick="inviteUser()">Invite User</button>
 
     <h3>Send Message</h3>
     <button onclick="sendMessage('Yes')">Yes</button>
@@ -91,6 +92,22 @@
             } else {
                 usersDiv.innerHTML = "<strong>Connected Users:</strong><br>" + Array.from(connectedUsers).join("<br>");
             }
+        }
+
+        function inviteUser() {
+            let selectedUser = prompt("Enter the Peer ID of the user you want to invite:");
+            if (!selectedUser || selectedUser.trim() === "") {
+                alert("Invalid Peer ID.");
+                return;
+            }
+
+            let conn = peer.connect(selectedUser);
+            conn.on('open', () => {
+                connections.push(conn);
+                connectedUsers.add(selectedUser);
+                updateConnectedUsers();
+                console.log("Connected to invited user:", selectedUser);
+            });
         }
 
         function saveName() {
