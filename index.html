@@ -4,29 +4,53 @@
   <meta charset="UTF-8">
   <title>WebRTC ללא שרת</title>
   <style>
-    body { font-family: Arial; direction: rtl; text-align: center; padding: 20px; }
-    textarea { width: 90%; height: 100px; margin: 10px 0; }
-    #chat { border: 1px solid #ccc; height: 200px; overflow-y: scroll; padding: 10px; }
+    body {
+      font-family: Arial;
+      direction: rtl;
+      text-align: center;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    textarea, input {
+      width: 90%;
+      max-width: 600px;
+      padding: 8px;
+      margin: 5px auto;
+      font-size: 16px;
+      direction: ltr;
+    }
+    #chat {
+      border: 1px solid #ccc;
+      background: white;
+      height: 200px;
+      overflow-y: scroll;
+      padding: 10px;
+      width: 90%;
+      max-width: 600px;
+      margin: 10px auto;
+      text-align: left;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
 
-  <h2>WebRTC Chat - ללא שרת</h2>
+  <h2>צ'אט P2P - WebRTC ללא שרת</h2>
 
   <button onclick="createOffer()">📤 צור חיבור (מארח)</button>
   <button onclick="createAnswer()">📥 התחבר (אורח)</button>
 
-  <div>
-    <h4>העתק/הדבק את ההצעה או התשובה</h4>
-    <textarea id="offer" placeholder="הצעה (Offer) / תשובה (Answer)"></textarea><br>
-    <button onclick="submitOfferOrAnswer()">💬 אשר</button>
-  </div>
+  <h4>העתק/הדבק את ההצעה או התשובה</h4>
+  <textarea id="offer" placeholder="הצעה (Offer) / תשובה (Answer)"></textarea><br>
+  <button onclick="submitOfferOrAnswer()">💬 אשר</button>
 
-  <div>
-    <h4>שלח הודעה</h4>
-    <input type="text" id="msgInput">
-    <button onclick="sendMessage()">שלח</button>
-  </div>
+  <h4>שליחת הודעה</h4>
+  <input type="text" id="msgInput" placeholder="הקלד הודעה כאן">
+  <button onclick="sendMessage()">שלח</button>
 
   <div id="chat"></div>
 
@@ -42,8 +66,7 @@
 
     function setupChannel() {
       dataChannel.onopen = () => {
-        console.log("החיבור נפתח 🎉");
-        append("📡 החיבור נוצר!");
+        append("📡 החיבור נפתח!");
       };
       dataChannel.onmessage = e => {
         append("👤: " + e.data);
@@ -57,27 +80,37 @@
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+
       setTimeout(() => {
         document.getElementById("offer").value = JSON.stringify(pc.localDescription);
-      }, 100);
+      }, 500);
     }
 
     async function createAnswer() {
-      isOfferer = false;
-      const remote = JSON.parse(document.getElementById("offer").value);
-      await pc.setRemoteDescription(remote);
+      try {
+        const remote = JSON.parse(document.getElementById("offer").value);
+        await pc.setRemoteDescription(remote);
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
 
-      setTimeout(() => {
-        document.getElementById("offer").value = JSON.stringify(pc.localDescription);
-      }, 100);
+        setTimeout(() => {
+          document.getElementById("offer").value = JSON.stringify(pc.localDescription);
+        }, 500);
+      } catch (err) {
+        alert("יש בעיה עם הפורמט של ההצעה");
+        console.error(err);
+      }
     }
 
     async function submitOfferOrAnswer() {
-      const remote = JSON.parse(document.getElementById("offer").value);
-      await pc.setRemoteDescription(remote);
+      try {
+        const remote = JSON.parse(document.getElementById("offer").value);
+        await pc.setRemoteDescription(remote);
+      } catch (err) {
+        alert("יש בעיה עם הפורמט של התשובה");
+        console.error(err);
+      }
     }
 
     function sendMessage() {
@@ -97,5 +130,6 @@
       chat.scrollTop = chat.scrollHeight;
     }
   </script>
+
 </body>
 </html>
